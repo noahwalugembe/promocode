@@ -267,17 +267,22 @@ class DbOperation
 }
 
 // Main method to check valid promo codes
-   function validateCode($codex,$pickup_latx,$pickup_longx,$hav_distance,$encodedString) {
+   function validateCode($codex,$origin_latx,$origin_longx,$destination_latx,$destination_longx,$hav_distance,$encodedString) {
 
     // Check for required parameters
-    if (isset($codex) && isset($pickup_latx) && isset($pickup_longx)) {
+    if (isset($codex) && isset($origin_latx) && isset($origin_longx)&& isset($destination_latx) && isset($destination_longx)) {
     
         // Put parameters into local variables
         
         $code = $codex;
         $active_code=1;
-		$pickup_lat=$pickup_latx;
-		$pickup_long=$pickup_longx;
+		$origin_lat=$origin_latx;
+		$origin_long=$origin_longx;
+		
+		$destination_lat=$destination_latx;
+		$destination_long=$destination_longx;
+		
+		
         // Look up code in database
         $user_id = 0;
         $stmt = $this->con->prepare("SELECT id, unlock_code, uses_remaining,active,radius,venue_lat, venue_long FROM rw_promo_code WHERE code='$code' AND active='$active_code'");
@@ -312,8 +317,11 @@ class DbOperation
 			"radius" => $radius,
 			"venue_lat" => $venue_lat,
 			"venue_long" =>$venue_long,
-			"pickup_lat" => $pickup_lat,
-			"pickup_long" => $pickup_long,
+			"origin_lat" => $origin_lat,
+			"origin_long" => $origin_long,
+			"destination_lat" => $destination_lat,
+			"destination_long" => $destination_long,
+			
 			"polyline" => $encodedString
 			
         );
