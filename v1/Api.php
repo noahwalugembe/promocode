@@ -182,12 +182,21 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
                 $lat_1 = $venue_lat;
                 $lon_1 = $venue_long;
                 
-				$lat_2 = $_POST['pickup_or_destination_lat'];
-                $lon_2 = $_POST['pickup_or_destination_long'];
+				$lat_2 = $_POST['origin_lat'];
+                $lon_2 = $_POST['origin_long'];
                 $delta_lat = $lat_2 - $lat_1 ;
                 $delta_lon = $lon_2 - $lon_1 ;
 				
 				$hav_distance = distance_haversine($lat_1, $lon_1, $lat_2, $lon_2);
+				
+				$xlat_2 = $_POST['destination_lat'];
+                $xlon_2 = $_POST['destination_long'];
+                $xdelta_lat = $xlat_2 - $lat_1 ;
+                $xdelta_lon = $xlon_2 - $lon_1 ;
+				
+				$xhav_distance = distance_haversine($lat_1, $lon_1, $xlat_2, $xlon_2);
+				
+				
 				
 				
 				
@@ -195,7 +204,7 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				$todaydate = date('y/m/d' );
 				
 				
-			if (($hav_distance <= $radius)&&($todaydate <= $expire_date)) {
+			if ((($hav_distance <= $radius)&&($xhav_distance <= $radius))&&($todaydate <= $expire_date)) {
 				//creating a new dboperation object
 				$db = new DbOperation();
 				
@@ -205,8 +214,10 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 					
 					$_POST['code'],
 					$_POST['device_id'],
-					$_POST['pickup_or_destination_lat'],
-					$_POST['pickup_or_destination_long'],
+					$_POST['origin_lat'],
+					$_POST['origin_long'],
+					$_POST['destination_lat'],
+					$_POST['destination_long'],
 					$hav_distance
 					
 					
@@ -286,7 +297,8 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				//Encode polyline
 		       $pointsToEncode = array(
                   array('x' => $venue_lat, 'y' => $venue_long),
-                  array('x' => $_POST['origin_lat'], 'y' => $_POST['origin_long'])
+                  array('x' => $_POST['origin_lat'], 'y' => $_POST['origin_long']),
+				  array('x' => $_POST['destination_lat'], 'y' => $_POST['destination_long'])
                   
                      );
             $polylineEncoder = new PolylineEncoder();
