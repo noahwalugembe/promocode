@@ -88,10 +88,10 @@ class DbOperation
 	
 	/*
 	* The create operation
-	* When this method is called a new record is created in the database //'event_lat','event_long'
+	* When this method is called a new record is created in the database 
 	*/
-	function createCode($code,$unlock_code,$uses_remaining,$amount,$expire_date,$active,$radius,$event_lat,$event_long){
-		$stmt = $this->con->prepare("INSERT INTO rw_promo_code (code,unlock_code,uses_remaining,amount,expire_date,active,radius,origin_lat,origin_long) VALUES ('$code','$unlock_code','$uses_remaining','$amount','$expire_date','$active','$radius','$event_lat','$event_long')");
+	function createCode($code,$unlock_code,$uses_remaining,$amount,$expire_date,$active,$radius,$venue_lat,$venue_long){
+		$stmt = $this->con->prepare("INSERT INTO rw_promo_code (code,unlock_code,uses_remaining,amount,expire_date,active,radius,venue_lat,venue_long) VALUES ('$code','$unlock_code','$uses_remaining','$amount','$expire_date','$active','$radius','$venue_lat','$venue_long')");
 		//$stmt->bind_param("ssis", $name, $realname, $rating, $teamaffiliation);
 		if($stmt->execute())
 			return true; 
@@ -108,7 +108,7 @@ class DbOperation
 		$stmt->execute();
 		$stmt->bind_result($id, $code,$unlock_code,$uses_remaining,$amount,$expire_date,$active,$radius);
 		
-		$heroes = array(); 
+		$promocodes = array(); 
 		
 		while($stmt->fetch()){
 			$hero  = array();
@@ -122,10 +122,10 @@ class DbOperation
 			$hero['radius'] = $radius; 
 			 			
 			
-			array_push($heroes, $hero); 
+			array_push($promocodes, $hero); 
 		}
 		
-		return $heroes; 
+		return $promocodes; 
 	}
 	
 	
@@ -134,7 +134,7 @@ class DbOperation
 		$stmt->execute();
 		$stmt->bind_result($id, $unlock_code,$uses_remaining,$amount,$expire_date,$active,$radius);
 		
-		$heroes = array(); 
+		$promocodes = array(); 
 		
 		while($stmt->fetch()){
 			$hero  = array();
@@ -148,16 +148,16 @@ class DbOperation
 			$hero['radius'] = $radius; 
 			 
 			
-			array_push($heroes, $hero); 
+			array_push($promocodes, $hero); 
 		}
 		
-		return $heroes; 
+		return $promocodes; 
 	}
 	
 	/*
 	* The update operation
 	* When this method is called the record with the given id is updated with the new given values
-	*/            //array('unlock_code','uses_remaining','amount','expire_date','active','radius','id'
+	*/            
 	function updateCode($code,$unlock_code,$uses_remaining,$amount,$expire_date,$active,$radius,$id){
 		$stmt = $this->con->prepare("UPDATE rw_promo_code SET code = '$code', unlock_code = '$unlock_code', uses_remaining = '$uses_remaining', amount = '$amount', expire_date = '$expire_date', active = '$active', radius = '$radius' WHERE id = '$id'");
 		
@@ -171,7 +171,7 @@ class DbOperation
 	* The delete operation
 	* When this method is called record is deleted for the given id 
 	*/
-	function deleteHero($id){
+	function deleteCode($id){
 		$stmt = $this->con->prepare("DELETE FROM rw_promo_code WHERE id = ? ");
 		$stmt->bind_param("i", $id);
 		if($stmt->execute())
@@ -185,14 +185,15 @@ class DbOperation
 	* When this method is called record is deleted for the given id 
 	*/
 	
-	    // Main method to redeem a code
-   function redeemCode($rw_app_idx,$codex,$device_idx,$pickup_latx,$pickup_longx,$hav_distance) {
+// Main method to redeem a code
+    // Main method to redeem a code 
+   function redeemCode($codex,$device_idx,$pickup_latx,$pickup_longx,$hav_distance) {
 
     // Check for required parameters
-    if (isset($rw_app_idx) && isset($codex) && isset($device_idx)) {
+    if (isset($hav_distance) && isset($codex) && isset($device_idx)) {
     
         // Put parameters into local variables
-        $rw_app_id = $rw_app_idx;
+        
         $code = $codex;
         $device_id = $device_idx;
         $active_code=1;
@@ -200,7 +201,7 @@ class DbOperation
 		$pickup_long=$pickup_longx;
         // Look up code in database
         $user_id = 0;
-        $stmt = $this->con->prepare("SELECT id, unlock_code, uses_remaining,active,radius,origin_lat, origin_long FROM rw_promo_code WHERE code='$code' AND active='$active_code'");
+        $stmt = $this->con->prepare("SELECT id, unlock_code, uses_remaining,active,radius,venue_lat, venue_long FROM rw_promo_code WHERE code='$code' AND active='$active_code'");
         //$stmt->bind_param("is", $rw_app_id, $code);
         $stmt->execute();
         $stmt->bind_result($id, $unlock_code, $uses_remaining ,$active,$radius,$origin_lat, $origin_long);
@@ -233,7 +234,7 @@ class DbOperation
         }
         $stmt->close();
         
-        // Bail if code already redeemed
+        // Echo if code already redeemed
         if ($redeemed_id > 0) {
             sendResponse(403, 'Code already used');
             return false;
@@ -242,7 +243,7 @@ class DbOperation
  		
 
 		
-        // Add tracking of redemption
+        // Echo  tracking of redemption
         $stmt = $this->con->prepare("INSERT INTO rw_promo_code_redeemed (rw_promo_code_id, device_id) VALUES (?, ?)");
         $stmt->bind_param("is", $id, $device_id);
 		//$stmt->bind_param("is", $id,$hav_distance);
@@ -265,7 +266,7 @@ class DbOperation
 
 }
 
-// Main method to validate a code
+// Main method to check valid promo codes
    function validateCode($codex,$pickup_latx,$pickup_longx,$hav_distance,$encodedString) {
 
     // Check for required parameters
@@ -279,10 +280,10 @@ class DbOperation
 		$pickup_long=$pickup_longx;
         // Look up code in database
         $user_id = 0;
-        $stmt = $this->con->prepare("SELECT id, unlock_code, uses_remaining,active,radius,origin_lat, origin_long FROM rw_promo_code WHERE code='$code' AND active='$active_code'");
+        $stmt = $this->con->prepare("SELECT id, unlock_code, uses_remaining,active,radius,venue_lat, venue_long FROM rw_promo_code WHERE code='$code' AND active='$active_code'");
         //$stmt->bind_param("is", $rw_app_id, $code);
         $stmt->execute();
-        $stmt->bind_result($id, $unlock_code, $uses_remaining ,$active,$radius,$origin_lat, $origin_long);
+        $stmt->bind_result($id, $unlock_code, $uses_remaining ,$active,$radius,$venue_lat, $venue_long);
         while ($stmt->fetch()) {
             break;
         }
@@ -309,8 +310,8 @@ class DbOperation
 			"uses_remaining" => $uses_remaining,
 			"active" => $active,
 			"radius" => $radius,
-			"origin_lat" => $origin_lat,
-			"origin_long" =>$origin_long,
+			"venue_lat" => $venue_lat,
+			"venue_long" =>$venue_long,
 			"pickup_lat" => $pickup_lat,
 			"pickup_long" => $pickup_long,
 			"polyline" => $encodedString

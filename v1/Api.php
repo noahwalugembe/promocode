@@ -48,7 +48,7 @@
 
    $code = promoCode(3);
    
-   //Calculating distance 
+   //Calculating haversine distance 
    
 function distance_haversine($lat1, $lon1, $lat2, $lon2) {
   global $earth_radius;
@@ -82,7 +82,7 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 			case 'createcode':
 				//first check the parameters required for this request are available or not
                 //unlock_code, uses_remaining	,'rating','teamaffiliation'			
-				isTheseParametersAvailable(array('unlock_code','uses_remaining','amount','expire_date','event_lat','event_long','active','radius'));
+				isTheseParametersAvailable(array('unlock_code','uses_remaining','amount','expire_date','venue_lat','venue_long','active','radius'));
 				
 				//creating a new dboperation object
 				$db = new DbOperation();
@@ -97,8 +97,8 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 					$_POST['expire_date'],
 					$_POST['active'],
 					$_POST['radius'],
-					$_POST['event_lat'],
-					$_POST['event_long']
+					$_POST['venue_lat'],
+					$_POST['venue_long']
 					
 				);
 				//$_POST['rating'],
@@ -113,7 +113,7 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 					$response['message'] = 'Hero addedd successfully';
 
 					//and we are getting all the codes from the database in the response
-					$response['heroes'] = $db->getCode();
+					$response['promocodes'] = $db->getCode();
 				}else{
 
 					//if record is not added that means there is an error 
@@ -131,14 +131,15 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				$db = new DbOperation();
 				$response['error'] = false; 
 				$response['message'] = 'Request successfully completed';
-				$response['heroes'] = $db->getCode();
+				$response['promocodes'] = $db->getCode();
 			break; 
 			
-			//RedeemAPI
+			//Redeem promo code API
 			case 'redeemcode':
-			    //first check the parameters required for this request are available or not
+			    case 'redeemcode':
+			    //first check the parameters required for this request are available or not 
                 			
-				isTheseParametersAvailable(array('rw_app_id','code','device_id','pickup_or_destination_lat','pickup_or_destination_long'));
+				isTheseParametersAvailable(array('code','device_id','pickup_or_destination_lat','pickup_or_destination_long'));
 				
 				//Selecting radius and venue coordinates from the data abase 
 				$promo_code=$_POST['code'];
@@ -151,13 +152,13 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
                 if(! $conn ) {die('Could not connect: ' . mysql_error());}
                 mysqli_select_db($conn,'SafeBoda_promo_code');
 				
-				$sql = "SELECT radius,origin_lat, origin_long, expire_date FROM rw_promo_code WHERE code='$promo_code' ";
+				$sql = "SELECT radius,venue_lat, venue_long, expire_date FROM rw_promo_code WHERE code='$promo_code' ";
                 $result = mysqli_query($conn,$sql) or trigger_error("SQL", E_USER_ERROR);
                 
                 $num_rows = mysqli_num_rows($result);
 				$radius;
-				$origin_lat;
-				$origin_long;
+				$venue_lat;
+				$venue_long;
 				$expire_date;
 				
 				
@@ -166,8 +167,8 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 					while ( $db_field = mysqli_fetch_assoc($result) ) {
 		 
                            $radius=$db_field['radius'];
-                           $origin_lat=$db_field['origin_lat'];
-						   $origin_long=$db_field['origin_long'];
+                           $venue_lat=$db_field['venue_lat'];
+						   $venue_long=$db_field['venue_long'];
 						   $expire_date=$db_field['expire_date'];
 					}
 					
@@ -178,8 +179,8 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				//Validating promo code radius
 				
 				$earth_radius = 3960.00; # in miles
-                $lat_1 = $origin_lat;
-                $lon_1 = $origin_long;
+                $lat_1 = $venue_lat;
+                $lon_1 = $venue_long;
                 
 				$lat_2 = $_POST['pickup_or_destination_lat'];
                 $lon_2 = $_POST['pickup_or_destination_long'];
@@ -200,8 +201,8 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				
 				$response['error'] = false; 
 				$response['message'] = 'Request successfully completed';
-				$response['heroes'] = $db->redeemCode(
-					$_POST['rw_app_id'],
+				$response['promocodes'] = $db->redeemCode(
+					
 					$_POST['code'],
 					$_POST['device_id'],
 					$_POST['pickup_or_destination_lat'],
@@ -233,13 +234,13 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
                 if(! $conn ) {die('Could not connect: ' . mysql_error());}
                 mysqli_select_db($conn,'SafeBoda_promo_code');
 				
-				$sql = "SELECT radius,origin_lat, origin_long, expire_date FROM rw_promo_code WHERE code='$promo_code' ";
+				$sql = "SELECT radius,venue_lat, venue_long, expire_date FROM rw_promo_code WHERE code='$promo_code' ";
                 $result = mysqli_query($conn,$sql) or trigger_error("SQL", E_USER_ERROR);
                 
                 $num_rows = mysqli_num_rows($result);
 				$radius;
-				$origin_lat;
-				$origin_long;
+				$venue_lat;
+				$venue_long;
 				$expire_date;
 				
 				
@@ -250,8 +251,8 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 					while ( $db_field = mysqli_fetch_assoc($result) ) {
 		 
                            $radius=$db_field['radius'];
-                           $origin_lat=$db_field['origin_lat'];
-						   $origin_long=$db_field['origin_long'];
+                           $venue_lat=$db_field['venue_lat'];
+						   $venue_long=$db_field['venue_long'];
 						   $expire_date=$db_field['expire_date'];
 					}
 					
@@ -263,8 +264,8 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				//Validating promo code radius
 				
 				$earth_radius = 3960.00; # in miles
-                $lat_1 = $origin_lat;
-                $lon_1 = $origin_long;
+                $lat_1 = $venue_lat;
+                $lon_1 = $venue_long;
                 
 				$lat_2 = $_POST['pickup_or_destination_lat'];
                 $lon_2 = $_POST['pickup_or_destination_long'];
@@ -275,7 +276,7 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				
 				//Encode polyline
 		       $pointsToEncode = array(
-                  array('x' => $origin_lat, 'y' => $origin_long),
+                  array('x' => $venue_lat, 'y' => $venue_long),
                   array('x' => $_POST['pickup_or_destination_lat'], 'y' => $_POST['pickup_or_destination_long'])
                   
                      );
@@ -298,7 +299,7 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				
 				$response['error'] = false; 
 				$response['message'] = 'Request successfully completed';
-				$response['heroes'] = $db->validateCode(
+				$response['promocodes'] = $db->validateCode(
 					
 					$_POST['code'],
 					
@@ -327,7 +328,7 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				
 				$response['error'] = false; 
 				$response['message'] = 'Request successfully completed';
-				$response['heroes'] = $db->getActive($_POST['active']);
+				$response['promocodes'] = $db->getActive($_POST['active']);
 				
 				
 			break; 
@@ -355,7 +356,7 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 				if($result){
 					$response['error'] = false; 
 					$response['message'] = 'Hero updated successfully';
-					$response['heroes'] = $db->getCode();
+					$response['promocodes'] = $db->getCode();
 				}else{
 					$response['error'] = true; 
 					$response['message'] = 'Some error occurred please try again';
@@ -363,15 +364,15 @@ function distance_haversine($lat1, $lon1, $lat2, $lon2) {
 			break; 
 			
 			//the delete operation
-			case 'deletehero':
+			case 'deletecode':
 
 				//for the delete operation we are getting a GET parameter from the url having the id of the record to be deleted
 				if(isset($_GET['id'])){
 					$db = new DbOperation();
-					if($db->deleteHero($_GET['id'])){
+					if($db->deleteCode($_GET['id'])){
 						$response['error'] = false; 
 						$response['message'] = 'Hero deleted successfully';
-						$response['heroes'] = $db->getHeroes();
+						$response['promocodes'] = $db->getCode();
 					}else{
 						$response['error'] = true; 
 						$response['message'] = 'Some error occurred please try again';
